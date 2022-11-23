@@ -1,0 +1,99 @@
+
+------------------------------
+Code: Fifo1
+------------------------------
+
+
+#include<stdio.h>
+#include<fcntl.h>
+#include<string.h>
+#include<unistd.h>
+#include<sys/stat.h>
+#include<sys/types.h>
+int main()
+{
+	int fd1,fd2,cnt=0;
+	char *myfifo1="file1";
+	char *myfifo2="file2";
+	char str1[100],str2[100];
+	char c;
+	
+	fd1 = mkfifo(myfifo1,0666);  
+	fd2 = mkfifo(myfifo2,0666);  
+	
+	
+	printf("\n\tEnter String :: ");
+	while( (c= getchar()) != '#')  
+	{
+		str1[cnt++] = c;
+	}
+	str1[cnt] = '\0';
+	printf("%s",str1);
+	
+	
+	fd1 = open(myfifo1,O_WRONLY);   
+	write(fd1,str1,strlen(str1)+1); 
+	close(fd1);
+	
+	fd2  = open(myfifo2,O_RDONLY);
+	read(fd2,str2,100);
+	
+	printf("\n\tMessage from fifo2 process :\n\t %s",str2);
+	
+	close(fd2); 
+	
+	return 0;
+}
+
+------------------------------------------------------
+CODE- FIFO 2
+------------------------------------------------------
+#include<stdio.h>
+#include<fcntl.h>
+#include<string.h>
+#include<unistd.h>
+#include<sys/stat.h>
+#include<sys/types.h>
+int main()
+{
+	FILE *fp;
+	int fd1,fd2,i,l=1,w=1,c=0;
+	char *myfifo1="file1";
+	char *myfifo2="file2";
+	char str1[100],str2[100];
+	char ch;
+	
+	
+	fd1 = open(myfifo1,O_RDONLY);
+	read(fd1,str1,100); 			
+	printf("\n\tPipe1 : %s",str1);
+	
+	
+	
+	i=0;
+	while(str1[i]!='\0')
+	{
+		if(str1[i]=='.' || str1[i]=='\n')
+			l++;
+		else if(str1[i]==' ')
+			w++;
+		else
+			c++;
+		i++;
+		
+	}	
+		 
+	
+	printf("\n\tNo of lines : %d",l);	
+	printf("\n\tNo of words : %d",w);
+	printf("\n\tNo of characters : %d",c);
+	
+	
+	close(fd1); 
+	
+	fd2  =  open(myfifo2,O_WRONLY);
+	write(fd2,str2,strlen(str2)+1);
+	close(fd2);
+	return 0;
+}
+

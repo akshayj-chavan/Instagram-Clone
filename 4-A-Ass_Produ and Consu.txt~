@@ -1,0 +1,119 @@
+
+#include<stdio.h> 
+#include<stdlib.h> 
+#include<unistd.h>
+#include<pthread.h> 
+#include<semaphore.h> 
+#define BUFFER_SIZE 5
+
+void init(); 
+void* consumer(void *arg); 
+void* producer(void *arg); 
+int item = 1; 
+
+typedef struct 
+{ 
+  int in; 
+  int out; 
+  int buff[BUFFER_SIZE];  
+  sem_t empty; 
+  sem_t full; 
+  pthread_mutex_t buff_lock;    
+}
+  buffer; 
+  buffer b; 
+  int cnt=0;
+
+int main(void) 
+{ 
+  int np, nc, i; 
+  pthread_t Pid[10], Cid[10]; 
+  init(); 
+  printf("\nEnter the number of Producers: "); 
+  scanf("%d", &np); 
+  printf("\nEnter the number of Consumers: "); 
+  scanf("%d", &nc);  
+ 
+  for(i=0; i<np; i++) 
+  {   
+    int *arg = malloc (sizeof(int*)); 
+    *arg = i; 
+    pthread_create(&Pid[i], NULL, producer, arg); 
+  } 
+
+  for(i=0; i<nc; i++) 
+  {   
+    int *arg = malloc (sizeof(int*)); 
+    *arg = i; 
+    pthread_create (&Cid[i], NULL, consumer, arg); 
+  }
+
+  for(i=0; i<np; i++) 
+                   {   
+     pthread_join(Pid[i], NULL); 
+  }     
+  for(i=0; i<nc; i++) 
+  {   
+    pthread_join(Cid[i], NULL); 
+  } 
+
+  pthread_mutex_destroy(&b.buff_lock);
+  sem_destroy(&b.empty);  
+  sem_destroy(&b.full);  
+  return 0; 
+} 
+ 
+void init() 
+{ 
+  sem_init(&b.empty, 0, BUFFER_SIZE);    
+  sem_init(&b.full, 0, 0); 
+  pthread_mutex_init(&b.buff_lock, NULL); 
+  b.in = 0; 
+  b.out = 0; 
+} 
+ 
+void* producer(void *arg) 
+{ 
+  int i = *(int *)arg; 
+  while(1)
+  { 
+    sem_wait(&b.empty); 
+    pthread_mutex_lock(&b.buff_lock); 
+    printf("\nProducer %d has produced item number %d (|)", i+1, item);     
+    b.buff[(b.in++)%BUFFER_SIZE] = item++; 
+    pthread_mutex_unlock(&b.buff_lock); 
+    sem_post(&b.full); 
+    sleep(3); 
+  } 
+} 
+
+void* consumer(void *arg) 
+{ 
+  int i = *(int *)arg; 
+  while(1)
+  { 
+    sem_wait(&b.full); 
+    pthread_mutex_lock(&b.buff_lock); 
+    printf("\nConsumer %d has consumed item number %d (x)", i+1,b.buff[(b.out++)%BUFFER_SIZE]);
+    pthread_mutex_unlock(&b.buff_lock); 
+    sem_post(&b.empty);
+    sleep(2);  
+  } 
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
